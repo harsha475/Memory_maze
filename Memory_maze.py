@@ -25,7 +25,7 @@ def reset_all():
     st.session_state.scrambled = ""
     st.session_state.display = ""
     st.session_state.show_input = False
-    st.experimental_rerun()
+    st.rerun()
 
 def show_dog():
     pos = "🐶" + " " * (st.session_state.level * 4) + "🏠"
