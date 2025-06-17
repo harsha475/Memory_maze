@@ -1,176 +1,160 @@
-import streamlit as st
-import random
-import time
+import streamlit as st, random, time
 
-st.set_page_config(page_title="Memory Maze", layout="centered")
+st.set_page_config(page_title="Memory Ghazer - DSA", layout="centered")
 
-# Initialize session state
+# --- Setup session state ---
 if "level" not in st.session_state:
     st.session_state.level = 0
     st.session_state.score = 0
-    st.session_state.total_time = 0
-    st.session_state.time_left = 0
-    st.session_state.pattern = []
-    st.session_state.correct = []
     st.session_state.start_time = time.time()
-    st.session_state.dog_position = 0
-    st.session_state.positions = [0, 25, 50, 75, 100]  # % across progress bar
-    st.session_state.show_input = False
+    st.session_state.phase_start = time.time()
+    st.session_state.pattern = []
+    st.session_state.correct = ""
     st.session_state.scrambled = ""
     st.session_state.display = ""
-    st.session_state.start_chamber = time.time()
+    st.session_state.show_input = False
 
-# Dog Progress Visual
-def dog_progress():
-    pos = st.session_state.positions[st.session_state.level]
-    st.progress(pos, text=f"🐶 Dog progress to 🏠")
-
-# Restart game
-def restart():
+# --- Helpers ---
+def reset_all():
     st.session_state.level = 0
     st.session_state.score = 0
-    st.session_state.total_time = 0
-    st.session_state.pattern = []
-    st.session_state.correct = []
-    st.session_state.dog_position = 0
     st.session_state.start_time = time.time()
+    st.session_state.phase_start = time.time()
+    st.session_state.pattern = []
+    st.session_state.correct = ""
     st.session_state.scrambled = ""
     st.session_state.display = ""
-    st.rerun()
+    st.session_state.show_input = False
+    st.experimental_rerun()
 
-# Timer
-def timer_expired(seconds):
-    elapsed = time.time() - st.session_state.start_chamber
-    return elapsed > seconds
+def show_dog():
+    pos = "🐶" + " " * (st.session_state.level * 4) + "🏠"
+    st.markdown(f"### {pos}")
 
-# Level 0: Array Chamber
-if st.session_state.level == 0:
-    st.title("🔢 Array Chamber")
-    dog_progress()
-    if not st.session_state.pattern:
-        st.session_state.pattern = [random.randint(1, 20) for _ in range(5)]
-        st.session_state.start_chamber = time.time()
-    st.info(f"Memorize this: {st.session_state.pattern}")
-    time.sleep(3)
-    st.write("Now enter the pattern within 7 seconds:")
-    guess = st.text_input("Enter numbers separated by space")
-    if guess and not timer_expired(10):
-        try:
-            user = list(map(int, guess.strip().split()))
-            if user == st.session_state.pattern:
-                st.success("Correct! Moving forward 🐶")
-                st.session_state.level += 1
-                st.session_state.score += 1
-                st.session_state.pattern = []
-                st.session_state.start_chamber = time.time()
-                st.rerun()
-            else:
-                st.error("Incorrect! Astra resets the Maze.")
-                restart()
-        except:
-            st.error("Enter valid numbers.")
-    elif timer_expired(10):
-        st.warning("⏰ Time's up!")
-        restart()
-
-# Level 1: String Scramble
-elif st.session_state.level == 1:
-    st.title("🔤 String Chamber")
-    dog_progress()
-    word = "DATASTRUCTURES"
-    if not st.session_state.scrambled:
-        distractors = random.choices("ZXCVBNMASDFGHJKLQWERTYUIOP", k=3)
-        letters = list(word + ''.join(distractors))
-        random.shuffle(letters)
-        st.session_state.scrambled = ''.join(letters)
-        st.session_state.correct = word
-        st.session_state.start_chamber = time.time()
-
-    st.info(f"Unscramble this: {st.session_state.scrambled}")
-    guess = st.text_input("Your answer")
-    if guess and not timer_expired(7):
-        if guess.upper() == st.session_state.correct:
-            st.success("Correct! Moving to next chamber 🐶")
-            st.session_state.level += 1
-            st.session_state.scrambled = ""
-            st.rerun()
-        else:
-            st.error("Wrong! Astra resets the Maze.")
-            restart()
-    elif timer_expired(7):
-        st.warning("⏰ Time's up!")
-        restart()
-
-# Level 2: Linked List Chamber
-elif st.session_state.level == 2:
-    st.title("🔗 Linked List Chamber")
-    dog_progress()
-    sequence = ["KHAITHI", "VIKRAM", "LEO"]
-    if not st.session_state.correct:
-        extra = random.sample(["KHAITHI 2", "ROLEX", "LEO 2"], 1)
-        full_seq = sequence + extra
-        display = full_seq[:]
-        random.shuffle(display)
-        st.session_state.correct = full_seq
-        st.session_state.display = display
-        st.session_state.start_chamber = time.time()
-
-    st.info(f"Fix the path: {' -> '.join(st.session_state.display)}")
-    st.write("Connect these LCU movies in sequence:")
-    guess = st.text_input("Enter order with ->")
-    if guess and not timer_expired(20):
-        user = [x.strip().upper() for x in guess.split("->")]
-        if user == [x.upper() for x in st.session_state.correct]:
-            st.success("Correct! Next chamber unlocked 🐶")
-            st.session_state.level += 1
-            st.session_state.correct = []
-            st.rerun()
-        else:
-            st.warning(f"Expected: {' -> '.join(st.session_state.correct)}")
-            restart()
-    elif timer_expired(20):
-        st.warning("⏰ Time's up!")
-        restart()
-
-# Level 3: Queue Chamber
-elif st.session_state.level == 3:
-    st.title("📥 Queue Chamber")
-    dog_progress()
-    tasks = ["Disable Alarm", "Collect Key", "Open Gate", "Go To Office"]
-    if not st.session_state.correct:
-        extra = random.sample(["Close Vault", "Alert Guard"], 1)
-        all_tasks = tasks + extra
-        random.shuffle(all_tasks)
-        st.session_state.correct = tasks + extra
-        st.session_state.display = all_tasks
-        st.session_state.start_chamber = time.time()
-
-    st.info(f"Arrange in FIFO order: {', '.join(st.session_state.display)}")
-    guess = st.text_input("Enter tasks comma-separated")
-    if guess and not timer_expired(30):
-        user = [x.strip().title() for x in guess.split(",")]
-        if user == st.session_state.correct:
-            st.success("🎉 All Chambers Cleared! 🐶 reached 🏠")
-            st.session_state.level += 1
-            st.rerun()
-        else:
-            st.error(f"Incorrect! Expected: {', '.join(st.session_state.correct)}")
-            restart()
-    elif timer_expired(30):
-        st.warning("⏰ Time's up!")
-        restart()
-
-# Final Result
-elif st.session_state.level >= 4:
-    st.title("🏁 Final Result")
-    st.balloons()
-    total_time = int(time.time() - st.session_state.start_time)
-    minutes = total_time // 60
-    seconds = total_time % 60
-    if st.session_state.score == 4:
-        st.success(f"You escaped the loop! Time Taken: {minutes}m {seconds}s")
+def check_timer(limit):
+    elapsed = time.time() - st.session_state.phase_start
+    remaining = int(limit - elapsed)
+    if remaining >= 0:
+        st.info(f"⏳ Time left: {remaining}s")
+        return True
     else:
-        st.error(f"You're still in the loop. Try again! Time: {minutes}m {seconds}s")
+        st.error("⏰ Time expired. Resetting game...")
+        time.sleep(2)
+        reset_all()
+        return False
 
+def on_correct():
+    st.success("✅ Correct! Moving forward")
+    st.session_state.score += 1
+    st.session_state.level += 1
+    st.session_state.phase_start = time.time()
+    st.experimental_rerun()
+
+# --- Level Logic ---
+
+# Chamber 1: Array
+if st.session_state.level == 0:
+    st.title("🧩 Chamber 1: Array Chamber")
+    show_dog()
+    if not st.session_state.pattern:
+        st.session_state.pattern = [random.randint(1,20) for _ in range(5)]
+        st.info(f"Memorize: {st.session_state.pattern}")
+        time.sleep(3)
+        st.session_state.phase_start = time.time()
+
+    if check_timer(10):
+        ans = st.text_input("Enter numbers separated by spaces")
+        if st.button("Submit"):
+            try:
+                guess = list(map(int, ans.strip().split()))
+                if guess == st.session_state.pattern:
+                    on_correct()
+                else:
+                    st.error("❌ Wrong pattern!")
+                    time.sleep(1)
+                    reset_all()
+            except:
+                st.error("Invalid input. Use numbers only.")
+
+# Chamber 2: String scramble
+elif st.session_state.level == 1:
+    st.title("🧩 Chamber 2: String Chamber")
+    show_dog()
+    if not st.session_state.scrambled:
+        word = "DATASTRUCTURES"
+        x = random.choices("ZXCVBNMASDFGHJKLQWERTYUIOP", k=3)
+        letters = list(word + "".join(x))
+        random.shuffle(letters)
+        st.session_state.scrambled = "".join(letters)
+        st.session_state.correct = word
+        st.session_state.phase_start = time.time()
+
+    st.info(f"Unscramble: {st.session_state.scrambled}")
+    if check_timer(7):
+        ans = st.text_input("Your answer")
+        if st.button("Submit"):
+            if ans.strip().upper() == st.session_state.correct:
+                on_correct()
+            else:
+                st.error("❌ Wrong!")
+                time.sleep(1)
+                reset_all()
+
+# Chamber 3: Linked List
+elif st.session_state.level == 2:
+    st.title("🧩 Chamber 3: Linked List Chamber")
+    show_dog()
+    if not st.session_state.correct:
+        base = ["KHAITHI","VIKRAM","LEO"]
+        extra = random.sample(["KHAITHI 2","ROLEX","LEO 2"],1)
+        seq = base + extra
+        st.session_state.correct = " -> ".join(seq).upper()
+        temp = seq[:]; random.shuffle(temp)
+        st.session_state.display = " -> ".join(temp)
+        st.session_state.phase_start = time.time()
+
+    st.info(f"Fix path (LCU): {st.session_state.display}")
+    if check_timer(25):
+        ans = st.text_input("Enter using -> between")
+        if st.button("Submit"):
+            if ans.strip().upper() == st.session_state.correct:
+                on_correct()
+            else:
+                st.error("❌ Incorrect!")
+                time.sleep(1)
+                reset_all()
+
+# Chamber 4: Queue
+elif st.session_state.level == 3:
+    st.title("🧩 Chamber 4: Queue Chamber")
+    show_dog()
+    if not st.session_state.correct:
+        base = ["Disable Alarm","Collect Key","Open Gate","Go To Office"]
+        extra = random.sample(["Close Vault","Alert Guard"],1)
+        full = base + extra
+        st.session_state.correct = ", ".join(full).title()
+        temp = full[:]; random.shuffle(temp)
+        st.session_state.display = ", ".join(temp)
+        st.session_state.phase_start = time.time()
+
+    st.info(f"Arrange FIFO: {st.session_state.display}")
+    if check_timer(30):
+        ans = st.text_input("Enter comma-separated list")
+        if st.button("Submit"):
+            if ans.strip().title() == st.session_state.correct:
+                on_correct()
+            else:
+                st.error("❌ Incorrect!")
+                time.sleep(1)
+                reset_all()
+
+# Final
+else:
+    st.title("🏁 Final Result")
+    show_dog()
+    total = int(time.time() - st.session_state.start_time)
+    mins,secs = divmod(total,60)
+    st.balloons()
+    st.success(f"You escaped! ⏱️ {mins}m {secs}s")
     if st.button("🔁 Play Again"):
-        restart()
+        reset_all()
